@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Estoque Simplificado</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script> <!-- Substitua pelo seu kit do Font Awesome se tiver um -->
+</head>
+<body>
+    <div id="app-container">
+        <header class="app-header">
+            <h1>Painel de Controle de Estoque</h1>
+            <div class="header-actions">
+                <div class="search-wrapper">
+                    <input type="text" id="search-input" placeholder="Pesquisar por produto...">
+                </div>
+                <button id="add-product-btn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Novo Produto
+                </button>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Código</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unitário</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-table-body">
+                        <!-- Produtos serão inseridos aqui -->
+                    </tbody>
+                </table>
+                <div id="empty-state" class="empty-state-message">
+                    <p>Nenhum produto cadastrado. Comece adicionando um novo produto.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Produto -->
+    <div id="product-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <form id="product-form">
+                <h2 id="modal-title">Adicionar Novo Produto</h2>
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label for="product-name">Nome do Produto</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-code">Código do Produto</label>
+                    <input type="text" id="product-code" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-quantity">Quantidade em Estoque</label>
+                    <input type="number" id="product-quantity" required min="0">
+                </div>
+                <div class="form-group">
+                    <label for="product-price">Preço Unitário (R$ )</label>
+                    <input type="number" id="product-price" required min="0" step="0.01">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-btn" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
