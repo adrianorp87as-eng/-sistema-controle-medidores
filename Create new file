@@ -1,0 +1,149 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // --- INÍCIO DA CONFIGURAÇÃO DO FIREBASE ---
+    // IMPORTANTE: Substitua o objeto abaixo pelas credenciais do seu projeto no Firebase
+    const firebaseConfig = {
+        apiKey: "SUA_API_KEY",
+        authDomain: "SEU_AUTH_DOMAIN",
+        projectId: "SEU_PROJECT_ID",
+        storageBucket: "SEU_STORAGE_BUCKET",
+        messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+        appId: "SEU_APP_ID"
+    };
+    // --- FIM DA CONFIGURAÇÃO DO FIREBASE ---
+
+    // Inicializa o Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const productsCollection = db.collection("products");
+
+    // Elementos do DOM
+    const addProductBtn = document.getElementById('add-product-btn');
+    const modal = document.getElementById('product-modal');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const productForm = document.getElementById('product-form');
+    const modalTitle = document.getElementById('modal-title');
+    const tableBody = document.getElementById('product-table-body');
+    const searchInput = document.getElementById('search-input');
+    const emptyState = document.getElementById('empty-state');
+
+    // Função para abrir e fechar o modal
+    const openModal = (product = null) => {
+        productForm.reset();
+        if (product) {
+            modalTitle.textContent = 'Editar Produto';
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-code').value = product.code;
+            document.getElementById('product-quantity').value = product.quantity;
+            document.getElementById('product-price').value = product.price;
+        } else {
+            modalTitle.textContent = 'Adicionar Novo Produto';
+            document.getElementById('product-id').value = '';
+        }
+        modal.style.display = 'flex';
+    };
+
+    const closeModal = () => {
+        modal.style.display = 'none';
+    };
+
+    // Função para renderizar a tabela de produtos
+    const renderTable = (products) => {
+        tableBody.innerHTML = '';
+        if (products.length === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+            products.forEach(product => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>${product.code}</td>
+                    <td>${product.quantity}</td>
+                    <td>R$ ${parseFloat(product.price).toFixed(2)}</td>
+                    <td class="actions-cell">
+                        <button class="edit-btn" data-id="${product.id}"><i class="fas fa-edit"></i></button>
+                        <button class="delete-btn" data-id="${product.id}"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+    };
+
+    // Carregar produtos do Firestore em tempo real
+    productsCollection.onSnapshot(snapshot => {
+        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderTable(products);
+    });
+
+    // Event Listeners
+    addProductBtn.addEventListener('click', () => openModal());
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // Salvar ou Atualizar produto
+    productForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('product-id').value;
+        const productData = {
+            name: document.getElementById('product-name').value,
+            code: document.getElementById('product-code').value,
+            quantity: parseInt(document.getElementById('product-quantity').value),
+            price: parseFloat(document.getElementById('product-price').value),
+        };
+
+        try {
+            if (id) {
+                await productsCollection.doc(id).update(productData);
+            } else {
+                await productsCollection.add(productData);
+            }
+            closeModal();
+        } catch (error) {
+            console.error("Erro ao salvar produto: ", error);
+            alert("Não foi possível salvar o produto. Verifique o console para mais detalhes.");
+        }
+    });
+
+    // Editar e Deletar
+    tableBody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        const id = btn.dataset.id;
+
+        if (btn.classList.contains('edit-btn')) {
+            const doc = await productsCollection.doc(id).get();
+            openModal({ id, ...doc.data() });
+        }
+
+        if (btn.classList.contains('delete-btn')) {
+            if (confirm('Tem certeza que deseja excluir este produto?')) {
+                try {
+                    await productsCollection.doc(id).delete();
+                } catch (error) {
+                    console.error("Erro ao excluir produto: ", error);
+                    alert("Não foi possível excluir o produto.");
+                }
+            }
+        }
+    });
+    
+    // Funcionalidade de busca
+    searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const name = row.cells[0].textContent.toLowerCase();
+            const code = row.cells[1].textContent.toLowerCase();
+            if (name.includes(searchTerm) || code.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
